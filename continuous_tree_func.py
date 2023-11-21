@@ -15,12 +15,10 @@ counter = 0
 X = df[['Age', 'Sex', 'BP', 'Cholesterol', 'Na_to_K']]
 Y = df["Drug"]
 
-# for i in X:
-#     print(i)
 
 #her transformere jeg dataen af de værdier der kun viser strings til dummy variables
-from sklearn import preprocessing
-le_sex = preprocessing.LabelEncoder()
+from sklearn import preprocessing #only imported for the preprocessing
+le_sex = preprocessing.LabelEncoder() 
 le_sex.fit(['F','M'])
 X['Sex'] = le_sex.transform(X['Sex']) 
 
@@ -34,9 +32,21 @@ le_Chol = preprocessing.LabelEncoder()
 le_Chol.fit([ 'NORMAL', 'HIGH'])
 X['Cholesterol'] = le_Chol.transform(X['Cholesterol']) 
 
-print(X[0:5])
+# print(X[0:5])
+from sklearn.model_selection import train_test_split
+X_trainset, X_testset, y_trainset, y_testset = train_test_split(X, Y, test_size=0.3, random_state=3)
+X_trainset = X_trainset.reset_index(drop=True) # resetting the indexes
+y_trainset = y_trainset.reset_index(drop=True) # resetting the indexes
+
+X_testset = X_testset.reset_index(drop=True) # resetting the indexes
+y_testset = y_testset.reset_index(drop=True) # resetting the indexes
+
+# print(X_testset.head(60))
 
 
+# print(X.head(5))
+# print(X_trainset.head(5))
+# print(y_trainset.head(5))
 
 
 # the more variying amount of all 5 classes_labels or drugs, the less the entropy
@@ -111,4 +121,133 @@ def best_split(predictor_df, target):
     return best_predictors, best_predicter_threshhold
 
 
-print(best_split(X, Y))
+#print(best_split(X, Y))
+
+
+def gini_impurity(target):
+    proportion = Entropy(target)[2]
+    gini_impurity = 1
+    for i in proportion:
+        gini_impurity -= i*i
+    
+    return gini_impurity
+
+#print(gini_impurity(Y))
+
+
+def decision_tree(predictor_df, target, decisions=None, impurity = 0.65):
+    if decisions is None: #
+        decisions = []
+
+
+    if gini_impurity(target) > impurity:
+        highest_infogain = best_split(predictor_df, target)
+        highest_infogain_index = np.argmax(highest_infogain[0])
+        threshold = np.max(highest_infogain[1][highest_infogain_index])
+        # return highest_infogain_thresh
+        pred_name = Entropy(predictor_df)[1][highest_infogain_index] #the name of the predictor with the highest information_gain
+        list_of_p_dfs = [pd.DataFrame(), pd.DataFrame()] #starting a list with the dataframes split
+        list_of_targets = [pd.DataFrame(),pd.DataFrame()]
+
+        decisions.append({"feature": pred_name, "Threshold <=": threshold, "action": "split"})
+
+        for i in range(len(target)): #create a loop to split the target variable by the best predictor
+            if predictor_df[pred_name][i] <= threshold:
+                list_of_p_dfs[0] = pd.concat([list_of_p_dfs[0], predictor_df.loc[[i]]], ignore_index=True)
+                list_of_targets[0] = pd.concat([list_of_targets[0], target.loc[[i]]], ignore_index=True)
+            elif predictor_df[pred_name][i] > threshold:
+                list_of_p_dfs[1] = pd.concat([list_of_p_dfs[1], predictor_df.loc[[i]]], ignore_index=True)
+                list_of_targets[1] = pd.concat([list_of_targets[1], target.loc[[i]]], ignore_index=True)
+
+
+        list_of_targets[0] = list_of_targets[0][0]
+        list_of_targets[1] = list_of_targets[1][0]
+
+        predictor_df = list_of_p_dfs #update the dataframe
+        target = list_of_targets # update the target
+
+        for i, (sub_df, sub_target) in enumerate(zip(list_of_p_dfs, list_of_targets)):
+            sub_df, sub_target, decisions = decision_tree(sub_df, sub_target, impurity=impurity, decisions = decisions)
+            list_of_p_dfs[i] = sub_df
+            list_of_targets[i] = sub_target
+    else:
+        decisions.append({"feature": None, "action": "predict", "value": target.value_counts().idxmax()})
+    
+        #now recursion
+        # for i, (sub_df, sub_target) in enumerate(zip(list_of_p_dfs, list_of_targets)): # for each (i is the index) sub_df and target_df in the dataframe- and target-lists :
+        #     updated_dataframes, updated_targets = decision_tree(sub_df, sub_target, impurity=impurity) # recursion
+        #     list_of_p_dfs[i] = updated_dataframes
+        #     list_of_targets[i] = updated_targets
+
+    return predictor_df, target, decisions
+
+# X_trainset, X_testset, y_trainset, y_testset
+
+
+# Example usage:
+# list_of_p_dfs, list_of_targets = decision_tree(predictor_df, target)
+
+
+print(decision_tree(X_trainset, y_trainset, impurity = 0.20)[2])
+
+#brainstorm to figure out how to predict:
+#less than- or equal to threshhold is left and more is right so it runs the dataframe that is left firstly, if it cant anymore it goes one back up and to the right
+#therfore i can count the number of times it has gone down and back up once, and how many times it has switched between thees two to know which of the predictions to make
+# if it has gone down three times to the 4'th node but it goes up, i know the next leaf is the one to the right down from the 3'rd node. if it goes up again
+#lets say you should go to the right. then ignore every thing until the code has went back as many times as it went to the left.
+#solved!
+
+#how does it know not to continue if the node at the far left is the one?
+#solution: making a variable keeping track of whether we are going left or right
+
+def predict(decisions, X_test):
+    predictions = []
+    # for every row in the test_set, put it through the decision tree until the value hits a leaf note.
+    for i in range(len(X_test)):
+        left_counter = 0
+        right_counter = -1
+        Left = None
+        right = None
+        for j in decisions:
+            if j['action'] == 'split': #if we are splitting the node then evaluate whether value for the predictor is under or over threshold
+                left_counter += 1
+                if right == True:
+                    continue
+                threshhold = j['Threshold <=']
+                if X_test[j['feature']][i] <= threshhold:
+                    Left = True # keeping in mind whether we are going left or right
+                    right = False
+                    left_counter = 0
+                    right_counter = -1
+                    continue
+                elif X_test[j['feature']][i] > threshhold:
+                    right = True
+                    Left = False
+                    continue
+            elif j['action'] == 'predict':
+                right_counter += 1 #this should be looked into because it might make an early mistake
+                if j['action'] == 'predict' and left_counter+right_counter != 0 and left_counter-right_counter == 0 and right == True: #if we have gone left and right equal amount of times
+                    predictions.append(j['value'])
+                    break
+                elif j['action'] == 'predict' and Left == True:
+                    predictions.append(j['value'])
+                    break
+    pd.DataFrame(predictions)
+    return predictions
+    #return predictions
+
+
+decish = decision_tree(X_trainset, y_trainset, impurity = 0.20)[2]
+
+predicted1 = predict(decish, X_testset)
+
+print(predicted1)
+print(y_testset)
+
+
+def accuracy(predicted, test):
+    return [i == j for i, j in zip(predicted, test)]
+
+print(accuracy(predicted1, X_testset))
+
+# def evaluate
