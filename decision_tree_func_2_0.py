@@ -18,6 +18,7 @@ Y = df["Drug"]
 
 #her transformere jeg dataen af de værdier der kun viser strings til dummy variables
 from sklearn import preprocessing #only imported for the preprocessing
+
 le_sex = preprocessing.LabelEncoder() 
 le_sex.fit(['F','M'])
 X['Sex'] = le_sex.transform(X['Sex']) 
@@ -184,18 +185,13 @@ def decision_tree(predictor_df, target, decisions=None, impurity = 0.65):
 # X_trainset, X_testset, y_trainset, y_testset
 
 
-# Example usage:
-# list_of_p_dfs, list_of_targets = decision_tree(predictor_df, target)
-
-
-print(decision_tree(X_trainset, y_trainset, impurity = 0.20)[2])
+#print(decision_tree(X_trainset, y_trainset, impurity = 0.20)[2])
 
 #brainstorm to figure out how to predict:
 #less than- or equal to threshhold is left and more is right so it runs the dataframe that is left firstly, if it cant anymore it goes one back up and to the right
 #therfore i can count the number of times it has gone down and back up once, and how many times it has switched between thees two to know which of the predictions to make
 # if it has gone down three times to the 4'th node but it goes up, i know the next leaf is the one to the right down from the 3'rd node. if it goes up again
 #lets say you should go to the right. then ignore every thing until the code has went back as many times as it went to the left.
-#solved!
 
 #how does it know not to continue if the node at the far left is the one?
 #solution: making a variable keeping track of whether we are going left or right
@@ -205,11 +201,17 @@ def predict(decisions, X_test):
     # for every row in the test_set, put it through the decision tree until the value hits a leaf note.
     for i in range(len(X_test)):
         left_counter = 0
-        right_counter = -1
+        right_counter = 0
         Left = None
         right = None
         for j in decisions:
             if j['action'] == 'split': #if we are splitting the node then evaluate whether value for the predictor is under or over threshold
+                if left_counter-right_counter == 0 and right == True: # because we want to start over if we have gone to the right.
+                        Left = None
+                        right = None
+                        left_counter = 0 
+                        right_counter = 0
+                
                 left_counter += 1
                 if right == True:
                     continue
@@ -218,21 +220,20 @@ def predict(decisions, X_test):
                     Left = True # keeping in mind whether we are going left or right
                     right = False
                     left_counter = 0
-                    right_counter = -1
+                    right_counter = 0
                     continue
                 elif X_test[j['feature']][i] > threshhold:
                     right = True
                     Left = False
                     continue
+            elif j['action'] == 'predict' and left_counter+right_counter != 0 and left_counter-right_counter == 0 and right == True: #if we have gone left and right equal amount of times
+                predictions.append(j['value'])
+                break
+            elif j['action'] == 'predict' and Left == True:
+                predictions.append(j['value'])
+                break
             elif j['action'] == 'predict':
-                right_counter += 1 #this should be looked into because it might make an early mistake
-                if j['action'] == 'predict' and left_counter+right_counter != 0 and left_counter-right_counter == 0 and right == True: #if we have gone left and right equal amount of times
-                    predictions.append(j['value'])
-                    break
-                elif j['action'] == 'predict' and Left == True:
-                    predictions.append(j['value'])
-                    break
-    pd.DataFrame(predictions)
+                right_counter += 1 
     return predictions
     #return predictions
 
@@ -244,10 +245,25 @@ predicted1 = predict(decish, X_testset)
 print(predicted1)
 print(y_testset)
 
+print (decish, X_testset.loc[18,])
 
 def accuracy(predicted, test):
-    return [i == j for i, j in zip(predicted, test)]
+    true_counter = 0
+    for i, j in zip(predicted, test):
+        if i == j:
+            true_counter += 1
 
-print(accuracy(predicted1, X_testset))
+    accuracy_percent = true_counter/len(test)
 
-# def evaluate
+    return accuracy_percent
+
+print("\n", "DecisionTree's Accuracy", accuracy(predicted1, y_testset))
+
+from sklearn.metrics import confusion_matrix
+
+print("Confusion Matrix: \n",confusion_matrix(predicted1, y_testset))
+
+# def evaluate()
+
+
+
