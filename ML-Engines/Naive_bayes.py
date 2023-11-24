@@ -3,13 +3,12 @@
 import pandas as pd
 import numpy as np
 import math 
+from scipy import stats 
 
 dataframe = "https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/IBMDeveloperSkillsNetwork-ML0101EN-SkillsNetwork/labs/Module%203/data/drug200.csv"
 df = pd.read_csv(dataframe, delimiter=",")
 
 #print(df.head(5))
-
-counter = 0
 
 # for
 X = df[['Age', 'Sex', 'BP', 'Cholesterol', 'Na_to_K']]
@@ -99,12 +98,21 @@ def train_model(predictor_df, target):
                     label_and_perc = {label: counter/len(i[j])}
                     label_percentage.append(label_and_perc)
                 cur_class = j
-                cond_probs_and_class = {cur_class: label_percentage}
-                conditional_probs_df.append(cond_probs_and_class)
-            else:
-                continue
+                cond_prob_and_class = {cur_class: label_percentage, "dtype": "object"}
+                conditional_probs_df.append(cond_prob_and_class)
+            elif predictor_df.dtypes[j] == 'int64' or predictor_df.dtypes[j] == 'float64': #if float or int then use gaussian (i could have used bernouli for integers but it could also be stuff like a uniform distribution)
+                cur_class = j
+                mu_and_std = stats.norm.fit(i[j])
+                conditional_prob_and_class = {cur_class: mu_and_std, "dtype": "int64"}
+                conditional_probs_df.append(conditional_prob_and_class)
+                
+            # elif predictor_df.dtypes[j] == 'int64': #if int then use bernouili
+            #     cur_class = j
+            #     mu_and_std = stats.be.fit(i[j])
+            #     conditional_prob_and_class = {cur_class: mu_and_std, "dtype": "float64"}
+            #     conditional_probs_df.append(conditional_prob_and_class)
 
-            cond_probs_df = {target_labels[index]: conditional_probs_df}
+            cond_probs_df = {"drug": target_labels[index], "probs": conditional_probs_df}
         conditional_probs.append(cond_probs_df)
     return conditional_probs, prior_list
 
@@ -127,15 +135,43 @@ print(model1)
 #so now i just need a loop that goes through all the drugs and calculates the bayes-score from the conditional probabilities given the class labels that we see, also including adding in the prior prob.
 
 
+print(X_testset.columns)
 
-def predict(model, test_data):
+def predict(model, X_test_data):
+    predictions = []
+    for i in range(len(X_test_data)): #for each row in the test data
+        bayes_score_list = []
+        for index, drug in enumerate(model[0]): #calculate bayes_score for each drug, so we can later pick the biggest value out of the bayes scores.
+            bayes_score = math.log(model[1][index])
+            #drug.get('drug'), bayes_score
+            for prob in drug.get('probs'):
+                if prob.get('dtype') == 'int64':
+                    print("hej")
+                    
+                elif prob.get('dtype') == 'object':
+                    continue
+            return
 
-    pass
+            
+
+        #return
+
+                #elif X_testset.dtypes[j] == 'int64' or X_testset.dtypes[j] == 'float64':
+
+
+
+
+        return predictions
+        
+
+    
+
+    
                     
 
 
             #elif X.dtypes[j] == 'int64' or X.dtypes[j] == 'float64': # if continuous or integer make gausian naive bayes
 
-
+predict(model1, X_testset)
 
 
