@@ -52,7 +52,7 @@ def split_data(predictor_df, target):
 
 
 
-    return predictor_dfs, target_lists
+    return predictor_dfs, target_lists, target_labels
 
 #print(split_data(X, Y))
 
@@ -66,8 +66,9 @@ def train_model(predictor_df, target):
             predictor_class_labels.append(labels(predictor_df[i]))
     
 
-
-    predictor_dfs = split_data(predictor_df, target)[0]
+    split = split_data(predictor_df, target)
+    predictor_dfs = split[0]
+    target_labels = split[2]
     #first calculate priors
     prior_list = []
     length_data = 0
@@ -79,26 +80,32 @@ def train_model(predictor_df, target):
 
     conditional_probs = []
     # then calculate conditional probabilities or likelyhood depending on whether it is a class-predictor or gaussian predictor.
-    for i in predictor_dfs:
+    for index, i in enumerate(predictor_dfs):
         conditional_probs_df = []
-        index_counter = -1
+        obj_index_counter = -1
         for j in i:
-            if X.dtypes[j] == 'object': # if discrete variable /class variable make regular naive bayes
-                index_counter += 1
+            if predictor_df.dtypes[j] == 'object': # if discrete variable /class variable make regular naive bayes
+                obj_index_counter += 1
                 # Calculating the probabilities for each predictor class
                 label_percentage = []
-                for l in predictor_class_labels[index_counter]: # for every type of label make a label-list
-                    counter = 0 #
+                for l in predictor_class_labels[obj_index_counter]: # for every type of label make a label-list
+                    counter = 1 #starting counter at 1 as you cannot do log(0)
                     #print(l)
                     for k in range(len(i[j])): # for every value in the current column
                         #print(len(i[j]))
                         if i[j][k] == l:
                             counter += 1
-                    label_percentage.append(counter/len(i[j]))
-                conditional_probs_df.append(label_percentage)
+                    label = l
+                    label_and_perc = {label: counter/len(i[j])}
+                    label_percentage.append(label_and_perc)
+                cur_class = j
+                cond_probs_and_class = {cur_class: label_percentage}
+                conditional_probs_df.append(cond_probs_and_class)
             else:
                 continue
-        conditional_probs.append(conditional_probs_df)
+
+            cond_probs_df = {target_labels[index]: conditional_probs_df}
+        conditional_probs.append(cond_probs_df)
     return conditional_probs, prior_list
 
 
@@ -107,7 +114,22 @@ model1 = train_model(X_trainset, y_trainset)
 
 print(model1)
 
+#brainstorm:
+# how do i gather the right conditionals?
+# if i use a for loop through trained model the loop will go through the list of lists with conditional probabilities for each label. # aka the drugs
+# the nested loop will go through the lists with conditional probabilities for each label. # aka the classes
+#the next nested loop will go through the conditional probabilities for each label. 
+#so i need to associate the predictor values of the row i am trying to predict with the right indeces of the trained model.
+# i could do this by going through the same process as i did when i created the probabilities, in order to make the right index.x
+# i could also develop my model to make a dictionary instead, this way it will be easier to read the model. 
+
+#i developed my model to create dictionaries
+#so now i just need a loop that goes through all the drugs and calculates the bayes-score from the conditional probabilities given the class labels that we see, also including adding in the prior prob.
+
+
+
 def predict(model, test_data):
+
     pass
                     
 

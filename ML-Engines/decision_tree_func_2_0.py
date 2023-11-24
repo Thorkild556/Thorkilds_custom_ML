@@ -9,7 +9,11 @@ df = pd.read_csv(dataframe, delimiter=",")
 
 #print(df.head(5))
 
-counter = 0
+
+
+ 
+### data preprocessing:
+#counter = 0
 
 # for
 X = df[['Age', 'Sex', 'BP', 'Cholesterol', 'Na_to_K']]
@@ -50,6 +54,9 @@ y_testset = y_testset.reset_index(drop=True) # resetting the indexes
 # print(y_trainset.head(5))
 
 
+### Functions 
+
+# entropy function
 # the more variying amount of all 5 classes_labels or drugs, the less the entropy
 def Entropy(Class):
     class_labels = []
@@ -263,7 +270,7 @@ from sklearn.metrics import confusion_matrix
 
 print("Confusion Matrix: \n",confusion_matrix(predicted1, y_testset))
 
-# def evaluate()
+# def evaluate
 
 
 

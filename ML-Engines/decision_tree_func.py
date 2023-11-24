@@ -116,36 +116,37 @@ def decision_tree(dataframe, target, decisions=None, impurity = 0.63):
     if gini_impurity(target) > impurity:
         infgainlist = infgain_list(dataframe, target)
         big = dataframe.columns[np.argmax(infgainlist)] #, max(infgainlist)
-        decisions.append({"feature": big, "threshold": None, "action": "split"})
+        decisions.append({"feature": big, "action": "split"})
         #create a new dataset for each class in the predictor with the biggest information-gain.
         predictor = dataframe[big] 
         predictor_labels = Entropy(predictor)[1]
         list_of_dataframes = []
         list_of_targets = []
 
-        for i in predictor_labels:
+        for i in predictor_labels: # for each label in the current predictor
             sub_df = pd.DataFrame()
             sub_target = pd.DataFrame()
             for dat in range(len(predictor)):
                 if predictor[dat] == i:
                     sub_df = pd.concat([sub_df, dataframe.loc[[dat]]], ignore_index=True)
                     sub_target = pd.concat([sub_target, target.loc[[dat]]], ignore_index=True)
-            sub_target = sub_target[0]
+            sub_target = sub_target[0] # transform as the function only takes a series and not a dataframe
             list_of_dataframes.append(sub_df)
             list_of_targets.append(sub_target)
 
-        dataframe = list_of_dataframes
-        target = list_of_targets
 
-        for i, (sub_df, sub_target) in enumerate(zip(list_of_dataframes, list_of_targets)):
+        dataframe = list_of_dataframes #update the dataframe
+        target = list_of_targets # update the target
+
+        for i, (sub_df, sub_target) in enumerate(zip(list_of_dataframes, list_of_targets)): #for each (i) sub_df and target_df in the dataframe- and target-lists :
             # Update dataframe and target only for the specific branch/sub-branch
-            updated_dataframes, updated_targets, decisions = decision_tree(sub_df, sub_target, decisions, impurity=impurity)
+            updated_dataframes, updated_targets, decisions = decision_tree(sub_df, sub_target, decisions, impurity=impurity) # recursion
             list_of_dataframes[i] = updated_dataframes
             list_of_targets[i] = updated_targets
 
     else:
         # If the node is a leaf node, record the decision
-        decisions.append({"feature": None, "threshold": None, "action": "predict", "value": target.value_counts().idxmax()})
+        decisions.append({"feature": None, "action": "predict", "value": target.value_counts().idxmax()})
 
         # for i in range(len(predictor_labels)):
         #     sub_branch += 1
@@ -156,7 +157,7 @@ def decision_tree(dataframe, target, decisions=None, impurity = 0.63):
     return dataframe, target, decisions
 
     
-print(decision_tree(X,Y)[2])
+print(decision_tree(X,Y))
 
 # list_of_df, list_oftarget = div[0], div[1]
 
