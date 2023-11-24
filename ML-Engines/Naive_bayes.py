@@ -1,7 +1,4 @@
-import pandas as pd
-
-
-
+# a naive bayes that takes both continuous data and classes
 
 import pandas as pd
 import numpy as np
@@ -19,23 +16,6 @@ X = df[['Age', 'Sex', 'BP', 'Cholesterol', 'Na_to_K']]
 Y = df["Drug"]
 
 
-#her transformere jeg dataen af de værdier der kun viser strings til dummy variables
-from sklearn import preprocessing #only imported for the preprocessing
-
-le_sex = preprocessing.LabelEncoder() 
-le_sex.fit(['F','M'])
-X['Sex'] = le_sex.transform(X['Sex']) 
-
-
-le_BP = preprocessing.LabelEncoder()
-le_BP.fit([ 'LOW', 'NORMAL', 'HIGH'])
-X['BP'] = le_BP.transform(X['BP'])
-
-
-le_Chol = preprocessing.LabelEncoder()
-le_Chol.fit([ 'NORMAL', 'HIGH'])
-X['Cholesterol'] = le_Chol.transform(X['Cholesterol']) 
-
 # print(X[0:5])
 from sklearn.model_selection import train_test_split
 X_trainset, X_testset, y_trainset, y_testset = train_test_split(X, Y, test_size=0.3, random_state=3)
@@ -45,14 +25,15 @@ y_trainset = y_trainset.reset_index(drop=True) # resetting the indexes
 X_testset = X_testset.reset_index(drop=True) # resetting the indexes
 y_testset = y_testset.reset_index(drop=True) # resetting the indexes
 
-
+# get the labels of a predictor/class
 def labels(Class):
     class_labels = []
     for i in Class:
         if i not in class_labels:
             class_labels.append(i)
     return class_labels
-    
+
+# print(labels(X['BP']))
     
 def split_data(predictor_df, target):
     target_lists = []
@@ -66,12 +47,73 @@ def split_data(predictor_df, target):
             if target_labels[i] == target[j]:
                 target_lists[i].append(target[j])
                 predictor_dfs[i] = pd.concat([predictor_dfs[i], predictor_df.loc[[j]]])
+    for i in range(len(predictor_dfs)):
+        predictor_dfs[i] = predictor_dfs[i].reset_index(drop=True) # resetting the indexes
+
+
 
     return predictor_dfs, target_lists
 
-print(split_data(X, Y))
+#print(split_data(X, Y))
 
 
 
-def get_percentages(predictor_df, target):
+def train_model(predictor_df, target):
+
+    predictor_class_labels = []
+    for i in predictor_df:
+        if X.dtypes[i] == 'object':
+            predictor_class_labels.append(labels(predictor_df[i]))
+    
+
+
+    predictor_dfs = split_data(predictor_df, target)[0]
+    #first calculate priors
+    prior_list = []
+    length_data = 0
+    for i in predictor_dfs:
+        length_data += len(i)
+
+    for i in predictor_dfs: # calculate priors:
+        prior_list.append(len(i)/length_data)
+
+    conditional_probs = []
+    # then calculate conditional probabilities or likelyhood depending on whether it is a class-predictor or gaussian predictor.
+    for i in predictor_dfs:
+        conditional_probs_df = []
+        index_counter = -1
+        for j in i:
+            if X.dtypes[j] == 'object': # if discrete variable /class variable make regular naive bayes
+                index_counter += 1
+                # Calculating the probabilities for each predictor class
+                label_percentage = []
+                for l in predictor_class_labels[index_counter]: # for every type of label make a label-list
+                    counter = 0 #
+                    #print(l)
+                    for k in range(len(i[j])): # for every value in the current column
+                        #print(len(i[j]))
+                        if i[j][k] == l:
+                            counter += 1
+                    label_percentage.append(counter/len(i[j]))
+                conditional_probs_df.append(label_percentage)
+            else:
+                continue
+        conditional_probs.append(conditional_probs_df)
+    return conditional_probs, prior_list
+
+
+
+model1 = train_model(X_trainset, y_trainset)
+
+print(model1)
+
+def predict(model, test_data):
     pass
+                    
+
+
+            #elif X.dtypes[j] == 'int64' or X.dtypes[j] == 'float64': # if continuous or integer make gausian naive bayes
+
+
+
+
