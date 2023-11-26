@@ -1,9 +1,12 @@
-# a naive bayes that takes both continuous data and classes
+# a naive bayes that takes both continuous data and factors
 
 import pandas as pd
 import numpy as np
 import math 
 from scipy import stats 
+
+
+###data and preproccessing
 
 dataframe = "https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/IBMDeveloperSkillsNetwork-ML0101EN-SkillsNetwork/labs/Module%203/data/drug200.csv"
 df = pd.read_csv(dataframe, delimiter=",")
@@ -23,6 +26,11 @@ y_trainset = y_trainset.reset_index(drop=True) # resetting the indexes
 
 X_testset = X_testset.reset_index(drop=True) # resetting the indexes
 y_testset = y_testset.reset_index(drop=True) # resetting the indexes
+
+
+
+### Functions
+
 
 # get the labels of a predictor/class
 def labels(Class):
@@ -55,6 +63,8 @@ def split_data(predictor_df, target):
 
 #print(split_data(X, Y))
 
+
+##model training
 
 
 def train_model(predictor_df, target):
@@ -103,7 +113,7 @@ def train_model(predictor_df, target):
             elif predictor_df.dtypes[j] == 'int64' or predictor_df.dtypes[j] == 'float64': #if float or int then use gaussian (i could have used bernouli for integers but it could also be stuff like a uniform distribution)
                 cur_class = j
                 mu_and_std = stats.norm.fit(i[j])
-                conditional_prob_and_class = {cur_class: mu_and_std, "dtype": "int64"}
+                conditional_prob_and_class = {cur_class: mu_and_std, "dtype": "float64"}
                 conditional_probs_df.append(conditional_prob_and_class)
                 
             # elif predictor_df.dtypes[j] == 'int64': #if int then use bernouili
@@ -120,7 +130,11 @@ def train_model(predictor_df, target):
 
 model1 = train_model(X_trainset, y_trainset)
 
-print(model1)
+#print(model1)
+
+
+##predict function
+
 
 #brainstorm:
 # how do i gather the right conditionals?
@@ -135,7 +149,6 @@ print(model1)
 #so now i just need a loop that goes through all the drugs and calculates the bayes-score from the conditional probabilities given the class labels that we see, also including adding in the prior prob.
 
 
-print(X_testset.columns)
 
 def predict(model, X_test_data):
     predictions = []
@@ -143,28 +156,33 @@ def predict(model, X_test_data):
         bayes_score_list = []
         for index, drug in enumerate(model[0]): #calculate bayes_score for each drug, so we can later pick the biggest value out of the bayes scores.
             bayes_score = math.log(model[1][index])
-            #drug.get('drug'), bayes_score
-            for prob in drug.get('probs'):
-                if prob.get('dtype') == 'int64':
-                    print("hej")
+
+            counter = 0
+            for var in drug.get('probs'): # for each variable in the model
+                if var.get('dtype') == 'float64': #if float64 get the likelyhood
+                    mean, sd = list(var.values())[0] # the mean and sd
+                    measured_value = X_test_data.loc[i, ][counter]
+                    likelihood = stats.norm.pdf(measured_value, loc=mean, scale=sd) # this is the 
+                    bayes_score += math.log(likelihood)
+                    counter +=1
+
                     
-                elif prob.get('dtype') == 'object':
-                    continue
-            return
-
-            
-
-        #return
-
-                #elif X_testset.dtypes[j] == 'int64' or X_testset.dtypes[j] == 'float64':
-
-
-
-
-        return predictions
+                elif var.get('dtype') == 'object':
+                    probs = list(var.values())[0]
+                    for prob in list(probs): # for labels in each variable
+                        if X_test_data.loc[i, ][counter] == list(prob.keys())[0]: #if the label 
+                            bayes_score += math.log(list(prob.values())[0])
+                    counter +=1
+            bayes_score_list.append(bayes_score)
         
+        
+        prediction = np.argmax(bayes_score_list)
+        drug = list(list(model[0])[prediction].values())[0]
+        predictions.append(drug)
 
-    
+
+    return predictions
+        
 
     
                     
@@ -172,6 +190,31 @@ def predict(model, X_test_data):
 
             #elif X.dtypes[j] == 'int64' or X.dtypes[j] == 'float64': # if continuous or integer make gausian naive bayes
 
-predict(model1, X_testset)
+predicted_set = predict(model1, X_testset)
 
+
+
+
+###Evaluation
+
+
+
+def accuracy(predicted, y_test):
+    true_counter = 0
+    for i, j in zip(predicted, y_test):
+        if i == j:
+            true_counter += 1
+    accuracy_percent = true_counter/len(y_test)
+
+    return accuracy_percent
+
+
+
+
+
+print("\n", "naive_bayes accuracy:", accuracy(predicted_set, y_testset))
+
+from sklearn.metrics import confusion_matrix
+
+print("Confusion Matrix: \n",confusion_matrix(predicted_set, y_testset))
 
