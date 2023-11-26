@@ -194,8 +194,7 @@ predicted_set = predict(model1, X_testset)
 
 
 
-
-###Evaluation
+### Model Evaluation
 
 
 
@@ -207,7 +206,6 @@ def accuracy(predicted, y_test):
     accuracy_percent = true_counter/len(y_test)
 
     return accuracy_percent
-
 
 
 
