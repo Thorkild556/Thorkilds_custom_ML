@@ -89,7 +89,7 @@ def train_model(predictor_df, target):
 
     conditional_probs = []
     # then calculate conditional probabilities or likelyhood depending on whether it is a class-predictor or gaussian predictor.
-    for index, i in enumerate(predictor_dfs):
+    for index, i in enumerate(predictor_dfs): # for each subset within each predictor 
         conditional_probs_df = []
         obj_index_counter = -1
         for j in i:
@@ -154,11 +154,11 @@ def predict(model, X_test_data):
     predictions = []
     for i in range(len(X_test_data)): #for each row in the test data
         bayes_score_list = []
-        for index, drug in enumerate(model[0]): #calculate bayes_score for each drug, so we can later pick the biggest value out of the bayes scores.
+        for index, pred in enumerate(model[0]): #calculate bayes_score for each drug, so we can later pick the biggest value out of the bayes scores.
             bayes_score = math.log(model[1][index])
 
             counter = 0
-            for var in drug.get('probs'): # for each variable in the model
+            for var in pred.get('probs'): # for each variable in the model
                 if var.get('dtype') == 'float64': #if float64 get the likelyhood
                     mean, sd = list(var.values())[0] # the mean and sd
                     measured_value = X_test_data.loc[i, ][counter]
@@ -177,8 +177,8 @@ def predict(model, X_test_data):
         
         
         prediction = np.argmax(bayes_score_list)
-        drug = list(list(model[0])[prediction].values())[0]
-        predictions.append(drug)
+        pred = list(list(model[0])[prediction].values())[0]
+        predictions.append(pred)
 
 
     return predictions
