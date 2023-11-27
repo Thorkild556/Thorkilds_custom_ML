@@ -19,6 +19,7 @@ df = pd.read_csv(dataframe, delimiter=",")
 X = df[['Age', 'Sex', 'BP', 'Cholesterol', 'Na_to_K']]
 Y = df["Drug"]
 
+X = X.copy() # so it doesnt print warning
 
 #her transformere jeg dataen af de værdier der kun viser strings til dummy variables
 from sklearn import preprocessing #only imported for the preprocessing
@@ -249,10 +250,10 @@ decish = decision_tree(X_trainset, y_trainset, impurity = 0.20)[2]
 
 predicted1 = predict(decish, X_testset)
 
-print(predicted1)
-print(y_testset)
+# print(predicted1)
+# print(y_testset)
 
-print (decish, X_testset.loc[18,])
+# print (decish, X_testset.loc[18,])
 
 def accuracy(predicted, test):
     true_counter = 0
@@ -264,11 +265,11 @@ def accuracy(predicted, test):
 
     return accuracy_percent
 
-print("\n", "DecisionTree's Accuracy", accuracy(predicted1, y_testset))
+#print("\n", "DecisionTree's Accuracy", accuracy(predicted1, y_testset))
 
 from sklearn.metrics import confusion_matrix
 
-print("Confusion Matrix: \n",confusion_matrix(predicted1, y_testset))
+#print("Confusion Matrix: \n",confusion_matrix(predicted1, y_testset))
 
 # def evaluate
 
