@@ -4,7 +4,6 @@ import numpy as np
 import math 
 from decision_tree_func_2_0 import decision_tree, predict
 
-
 #https://www.youtube.com/watch?v=5O8HvA9pMew
 
 
@@ -53,20 +52,5 @@ X_testset = X_testset.reset_index(drop=True) # resetting the indexes
 y_testset = y_testset.reset_index(drop=True) # resetting the indexes
 
 
-
-decish = decision_tree(X_trainset, y_trainset, impurity = 0.20)[2]
-
-predicted1 = predict(decish, X_testset)
-
-
-def accuracy(predicted, test):
-    true_counter = 0
-    for i, j in zip(predicted, test):
-        if i == j:
-            true_counter += 1
-
-    accuracy_percent = true_counter/len(test)
-
-    return accuracy_percent
-
-print("\n", "DecisionTree's Accuracy", accuracy(predicted1, y_testset))
+def random_forest():
+    pass
