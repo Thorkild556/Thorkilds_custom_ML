@@ -20,7 +20,7 @@ Y = df["Drug"]
 
 # print(X[0:5])
 from sklearn.model_selection import train_test_split
-X_trainset, X_testset, y_trainset, y_testset = train_test_split(X, Y, test_size=0.3, random_state=3)
+X_trainset, X_testset, y_trainset, y_testset = train_test_split(X, Y, test_size=0.3, random_state=1)
 X_trainset = X_trainset.reset_index(drop=True) # resetting the indexes
 y_trainset = y_trainset.reset_index(drop=True) # resetting the indexes
 
@@ -122,7 +122,7 @@ def train_model(predictor_df, target):
             #     conditional_prob_and_class = {cur_class: mu_and_std, "dtype": "float64"}
             #     conditional_probs_df.append(conditional_prob_and_class)
 
-            cond_probs_df = {"drug": target_labels[index], "probs": conditional_probs_df}
+            cond_probs_df = {"Target": target_labels[index], "probs": conditional_probs_df}
         conditional_probs.append(cond_probs_df)
     return conditional_probs, prior_list
 
