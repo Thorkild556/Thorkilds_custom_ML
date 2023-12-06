@@ -2,6 +2,7 @@
 import pandas as pd
 import numpy as np
 import math 
+import random
 from decision_tree_func_2_0 import decision_tree, predict
 
 #https://www.youtube.com/watch?v=5O8HvA9pMew
@@ -52,5 +53,30 @@ X_testset = X_testset.reset_index(drop=True) # resetting the indexes
 y_testset = y_testset.reset_index(drop=True) # resetting the indexes
 
 
-def random_forest():
+def randlist(n, repeat = True):
+    rand_list = []
+
+    if repeat == True:
+        for i in range(n):
+            rand = random.randint(1, 3)
+            rand_list.append(rand)
+    else:
+        counter = 0
+        while counter < n:
+            rand = random.randint(1, 3)
+            if rand in rand_list:
+                continue
+            else:
+                rand_list.append(rand)
+                counter += 1
+    
+    return rand_list
+        
+
+print(randlist(3, repeat = False))
+
+
+
+
+def random_forest(n_rows, n_cols, n_trees):
     pass
