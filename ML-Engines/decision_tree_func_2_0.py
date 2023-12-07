@@ -144,12 +144,15 @@ def gini_impurity(target):
 #print(gini_impurity(Y))
 
 
-def decision_tree(predictor_df, target, decisions=None, impurity = 0.65):
+def decision_tree(predictor_df, target, decisions=None, impurity = 0.65, n_min = 5):
     if decisions is None: #
         decisions = []
 
 
-    if gini_impurity(target) > impurity:
+    
+    print(len(target))
+
+    if gini_impurity(target) > impurity and len(target) > n_min:
         highest_infogain = best_split(predictor_df, target)
         highest_infogain_index = np.argmax(highest_infogain[0])
         threshold = np.max(highest_infogain[1][highest_infogain_index])
