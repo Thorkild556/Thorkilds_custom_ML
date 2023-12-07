@@ -149,9 +149,6 @@ def decision_tree(predictor_df, target, decisions=None, impurity = 0.65, n_min =
         decisions = []
 
 
-    
-    print(len(target))
-
     if gini_impurity(target) > impurity and len(target) > n_min:
         highest_infogain = best_split(predictor_df, target)
         highest_infogain_index = np.argmax(highest_infogain[0])
@@ -177,9 +174,10 @@ def decision_tree(predictor_df, target, decisions=None, impurity = 0.65, n_min =
 
         predictor_df = list_of_p_dfs #update the dataframe
         target = list_of_targets # update the target
-
+        
+        # Recursion for the split dataset
         for i, (sub_df, sub_target) in enumerate(zip(list_of_p_dfs, list_of_targets)):
-            sub_df, sub_target, decisions = decision_tree(sub_df, sub_target, impurity=impurity, decisions = decisions)
+            sub_df, sub_target, decisions = decision_tree(sub_df, sub_target, impurity=impurity, decisions = decisions) # recursion
             list_of_p_dfs[i] = sub_df
             list_of_targets[i] = sub_target
     else:
